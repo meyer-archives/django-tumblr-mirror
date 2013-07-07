@@ -1,0 +1,5 @@
+Django
+-e git+https://github.com/meyer/django-medusa.git#egg=django_medusa
+django-polymorphic
+django-registration
+oauth2
