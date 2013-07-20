@@ -58,10 +58,26 @@ AWS_STORAGE_BUCKET_NAME = 'YOUR_STATIC_BUCKET_HERE'
 
 SIMPLESTATIC_COMPRESSED_DIR = '-'
 
+TUMBLR_REQUEST_TOKEN_URL = 'http://www.tumblr.com/oauth/request_token'
+TUMBLR_ACCESS_TOKEN_URL = 'http://www.tumblr.com/oauth/access_token'
+TUMBLR_AUTHORIZE_URL = 'http://www.tumblr.com/oauth/authorize'
+
+# OAuth keys for mikemeyer.tumblr.com / meyer.fm
 TUMBLR_CONSUMER_KEY = 'W7XfPjkuhi1JgnLPt8n9Cz9nDtEc29T5T0lDrC5WmHDXrxb1zF'
 TUMBLR_CONSUMER_SECRET = '8wic6HwppRBi9XG8Z8tKRiF9WoHAQniEJ9OC3E85m7TJmQId5n'
-TUMBLR_OAUTH_TOKEN = ''
-TUMBLR_OAUTH_SECRET = ''
+
+# User token/secret for mikemeyer.tumblr.com / meyer.fm
+TUMBLR_USER_TOKEN = 'WNsFCMlKqIP1ZTwsKF5AtVp3sCg2G9ANvadUbZmNf7F09wZ7eY'
+TUMBLR_USER_SECRET = 'eLxSpzwHebOUSE20MGvsM3OigzKgIAQlC5lW5ZxI2lOagNKAJf'
+
+TUMBLR_CONSUMER_KEY = ''
+TUMBLR_CONSUMER_SECRET = ''
+
+# User token/secret for mctestalot.tumblr.com / fakemike.meyer.fm
+TUMBLR_USER_TOKEN = ''
+TUMBLR_USER_SECRET = ''
+
+TUMBLR_BLOGNAME = 'fakemikemeyer'
 
 SECRET_KEY = '3kr3n1!(=ady#24(rgk@_i12fl*p4oi&&00s_h(klna_b+@*a3'
 
@@ -118,10 +134,12 @@ INSTALLED_APPS = (
 	'simplestatic',
 	'south',
 	'polymorphic',
+
+	# Third-party, modified
 	'django_medusa',
 
 	# My apps
-	# 'registration',
+	'utils',
 	'tumblr',
 )
 

@@ -4,27 +4,6 @@ from polymorphic import PolymorphicModel
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 
-POST_TYPE_CHOICES = (
-	('t','text post'),
-	('p','photo post'),
-	('q','quote post'),
-	('l','link post'),
-	('c','chat post'),
-	('a','audio post'),
-	('v','video post'),
-	('r','answer post'),
-)
-
-POST_STATE_CHOICES = (
-	('p','published'),
-	('d','draft'),
-)
-
-POST_FORMAT_CHOICES = (
-	('h','HTML'),
-	('m','Markdown'),
-)
-
 class TumblrMeta(models.Model):
 	key = models.CharField(max_length=100, unique=True)
 	value = models.TextField()
@@ -32,28 +11,48 @@ class TumblrMeta(models.Model):
 	def __unicode__(self):
 		return u"%s" % self.key
 
+	class Meta:
+		verbose_name = verbose_name_plural = 'Tumblr meta'
+
 
 class TumblrPostTag(models.Model):
 	tag_name = models.CharField(max_length=100)
-	tag_slug = models.SlugField()
+	tag_slug = models.SlugField(unique=True)
 
 	def __unicode__(self):
 		return self.tag_name
 
 class TumblrPost(PolymorphicModel):
-	post_id = models.IntegerField()
-	post_url = models.URLField()
-	post_type = models.CharField(max_length=1,choices=POST_TYPE_CHOICES)
+	post_id = models.BigIntegerField('post ID', primary_key=True)
+	post_url = models.URLField('post URL')
+	post_shorturl = models.URLField('post short URL')
+	post_type = models.CharField(max_length=20)
+	post_slug = models.SlugField(blank=True)
 	post_date = models.DateTimeField()
-	post_timestamp = models.IntegerField()
-	post_state = models.CharField(max_length=1, choices=POST_STATE_CHOICES)
-	post_format = models.CharField(max_length=1, choices=POST_FORMAT_CHOICES)
+	post_timestamp = models.CharField(max_length=10)
+	post_state = models.CharField(max_length=20)
+	post_format = models.CharField(max_length=20)
 	post_reblog_key = models.CharField(max_length=20)
 	post_tags = models.ManyToManyField(TumblrPostTag)
 	note_count = models.IntegerField(default=0)
 
+	api_response = models.TextField(blank=True)
+
 	def __unicode__(self):
 		return u"%s -- %s" % (self.post_type, self.post_id,)
+
+	def get_absolute_url(self):
+		p_url = '/post/%s' % self.post_id
+
+		if self.post_slug:
+			return '%s/%s' % (p_url,self.post_slug)
+
+		return p_url
+
+	class Meta:
+		get_latest_by = 'post_date'
+		verbose_name = 'post'
+		verbose_name_plural = 'all posts'
 
 # Post Types
 
@@ -62,28 +61,30 @@ class TextPost(TumblrPost):
 	body = models.TextField(blank=True, null=True)
 
 	def __unicode__(self):
-		return u'Text Post: %s' % title
-
-def tumblr_photo_name(instance, filename):
-	# return instance.
-	return '/'.join(['content', instance.user.username, filename])
-
-class TumblrPhoto(models.Model):
-	photo = models.ImageField(upload_to=tumblr_photo_name)
-
-	content_type = models.ForeignKey(ContentType)
-	object_id = models.PositiveIntegerField()
-	content_object = generic.GenericForeignKey('content_type', 'object_id')
-
-	def __unicode__(self):
-		return u'Photo: %s' % photo.image.url
+		return u'Text Post: %s' % self.title
 
 class PhotoPost(TumblrPost):
 	caption = models.CharField(blank=True, max_length=150)
-	photos = generic.GenericRelation(TumblrPhoto)
+	# width
+	# height
 
 	def __unicode__(self):
 		return u'Photo Post: %s' % self.caption
+
+def tumblr_photo_name(instance, filename):
+	return filename
+	return '/'.join(['content', instance.user.username, filename])
+
+class TumblrPhoto(models.Model):
+	photo = models.ImageField(blank=True,upload_to=tumblr_photo_name)
+	photo_url = models.URLField()
+	caption = models.CharField(blank=True, max_length=150)
+	# alt_sizes[]
+
+	blog_post = models.ForeignKey(PhotoPost, related_name='photos')
+
+	def __unicode__(self):
+		return u'Photo: %s' % self.photo.image.url
 
 class QuotePost(TumblrPost):
 	source_url = models.URLField(blank=True)
@@ -95,6 +96,7 @@ class QuotePost(TumblrPost):
 		return u'Quote Post: %s' % self.text
 
 class LinkPost(TumblrPost):
+	title = models.CharField(blank=True, null=True, max_length=150)
 	url = models.URLField()
 	description = models.TextField(blank=True)
 

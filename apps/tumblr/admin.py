@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from tumblr_mirror.models import *
+from tumblr.models import *
 
 admin.site.register(TumblrMeta)
 

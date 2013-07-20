@@ -20,23 +20,25 @@ class Migration(SchemaMigration):
         db.create_table(u'tumblr_tumblrposttag', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('tag_name', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('tag_slug', self.gf('django.db.models.fields.SlugField')(max_length=50)),
+            ('tag_slug', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=50)),
         ))
         db.send_create_signal(u'tumblr', ['TumblrPostTag'])
 
         # Adding model 'TumblrPost'
         db.create_table(u'tumblr_tumblrpost', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('polymorphic_ctype', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'polymorphic_tumblr.tumblrpost_set', null=True, to=orm['contenttypes.ContentType'])),
-            ('post_id', self.gf('django.db.models.fields.IntegerField')()),
+            ('post_id', self.gf('django.db.models.fields.BigIntegerField')(primary_key=True)),
             ('post_url', self.gf('django.db.models.fields.URLField')(max_length=200)),
-            ('post_type', self.gf('django.db.models.fields.CharField')(max_length=1)),
+            ('post_shorturl', self.gf('django.db.models.fields.URLField')(max_length=200)),
+            ('post_type', self.gf('django.db.models.fields.CharField')(max_length=20)),
+            ('post_slug', self.gf('django.db.models.fields.SlugField')(max_length=50, blank=True)),
             ('post_date', self.gf('django.db.models.fields.DateTimeField')()),
-            ('post_timestamp', self.gf('django.db.models.fields.IntegerField')()),
-            ('post_state', self.gf('django.db.models.fields.CharField')(max_length=1)),
-            ('post_format', self.gf('django.db.models.fields.CharField')(max_length=1)),
+            ('post_timestamp', self.gf('django.db.models.fields.CharField')(max_length=10)),
+            ('post_state', self.gf('django.db.models.fields.CharField')(max_length=20)),
+            ('post_format', self.gf('django.db.models.fields.CharField')(max_length=20)),
             ('post_reblog_key', self.gf('django.db.models.fields.CharField')(max_length=20)),
             ('note_count', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            ('api_response', self.gf('django.db.models.fields.TextField')(blank=True)),
         ))
         db.send_create_signal(u'tumblr', ['TumblrPost'])
 
@@ -57,21 +59,20 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'tumblr', ['TextPost'])
 
-        # Adding model 'TumblrPhoto'
-        db.create_table(u'tumblr_tumblrphoto', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('photo', self.gf('django.db.models.fields.files.ImageField')(max_length=100)),
-            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
-            ('object_id', self.gf('django.db.models.fields.PositiveIntegerField')()),
-        ))
-        db.send_create_signal(u'tumblr', ['TumblrPhoto'])
-
         # Adding model 'PhotoPost'
         db.create_table(u'tumblr_photopost', (
             (u'tumblrpost_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['tumblr.TumblrPost'], unique=True, primary_key=True)),
             ('caption', self.gf('django.db.models.fields.CharField')(max_length=150, blank=True)),
         ))
         db.send_create_signal(u'tumblr', ['PhotoPost'])
+
+        # Adding model 'TumblrPhoto'
+        db.create_table(u'tumblr_tumblrphoto', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('photo', self.gf('django.db.models.fields.files.ImageField')(max_length=100)),
+            ('blog_post', self.gf('django.db.models.fields.related.ForeignKey')(related_name='photos', to=orm['tumblr.PhotoPost'])),
+        ))
+        db.send_create_signal(u'tumblr', ['TumblrPhoto'])
 
         # Adding model 'QuotePost'
         db.create_table(u'tumblr_quotepost', (
@@ -86,6 +87,7 @@ class Migration(SchemaMigration):
         # Adding model 'LinkPost'
         db.create_table(u'tumblr_linkpost', (
             (u'tumblrpost_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['tumblr.TumblrPost'], unique=True, primary_key=True)),
+            ('title', self.gf('django.db.models.fields.CharField')(max_length=150, null=True, blank=True)),
             ('url', self.gf('django.db.models.fields.URLField')(max_length=200)),
             ('description', self.gf('django.db.models.fields.TextField')(blank=True)),
         ))
@@ -132,11 +134,11 @@ class Migration(SchemaMigration):
         # Deleting model 'TextPost'
         db.delete_table(u'tumblr_textpost')
 
-        # Deleting model 'TumblrPhoto'
-        db.delete_table(u'tumblr_tumblrphoto')
-
         # Deleting model 'PhotoPost'
         db.delete_table(u'tumblr_photopost')
+
+        # Deleting model 'TumblrPhoto'
+        db.delete_table(u'tumblr_tumblrphoto')
 
         # Deleting model 'QuotePost'
         db.delete_table(u'tumblr_quotepost')
@@ -180,6 +182,7 @@ class Migration(SchemaMigration):
         u'tumblr.linkpost': {
             'Meta': {'object_name': 'LinkPost', '_ormbases': [u'tumblr.TumblrPost']},
             'description': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '150', 'null': 'True', 'blank': 'True'}),
             u'tumblrpost_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['tumblr.TumblrPost']", 'unique': 'True', 'primary_key': 'True'}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '200'})
         },
@@ -210,31 +213,32 @@ class Migration(SchemaMigration):
         },
         u'tumblr.tumblrphoto': {
             'Meta': {'object_name': 'TumblrPhoto'},
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
+            'blog_post': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'photos'", 'to': u"orm['tumblr.PhotoPost']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'photo': ('django.db.models.fields.files.ImageField', [], {'max_length': '100'})
         },
         u'tumblr.tumblrpost': {
             'Meta': {'object_name': 'TumblrPost'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'api_response': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'note_count': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'polymorphic_ctype': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'polymorphic_tumblr.tumblrpost_set'", 'null': 'True', 'to': u"orm['contenttypes.ContentType']"}),
             'post_date': ('django.db.models.fields.DateTimeField', [], {}),
-            'post_format': ('django.db.models.fields.CharField', [], {'max_length': '1'}),
-            'post_id': ('django.db.models.fields.IntegerField', [], {}),
+            'post_format': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
+            'post_id': ('django.db.models.fields.BigIntegerField', [], {'primary_key': 'True'}),
             'post_reblog_key': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
-            'post_state': ('django.db.models.fields.CharField', [], {'max_length': '1'}),
+            'post_shorturl': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
+            'post_slug': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'blank': 'True'}),
+            'post_state': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
             'post_tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['tumblr.TumblrPostTag']", 'symmetrical': 'False'}),
-            'post_timestamp': ('django.db.models.fields.IntegerField', [], {}),
-            'post_type': ('django.db.models.fields.CharField', [], {'max_length': '1'}),
+            'post_timestamp': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
+            'post_type': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
             'post_url': ('django.db.models.fields.URLField', [], {'max_length': '200'})
         },
         u'tumblr.tumblrposttag': {
             'Meta': {'object_name': 'TumblrPostTag'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'tag_name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'tag_slug': ('django.db.models.fields.SlugField', [], {'max_length': '50'})
+            'tag_slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'})
         },
         u'tumblr.videopost': {
             'Meta': {'object_name': 'VideoPost', '_ormbases': [u'tumblr.TumblrPost']},
