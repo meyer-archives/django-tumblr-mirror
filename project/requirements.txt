@@ -1,5 +1,10 @@
 Django
 -e git+https://github.com/meyer/django-medusa.git#egg=django_medusa
 django-polymorphic
-django-registration
 oauth2
+south
+psycopg2
+django-simplestatic
+pil
+pytumblr
+markdown

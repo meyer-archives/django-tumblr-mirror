@@ -167,6 +167,13 @@ LOGGING = {
 	}
 }
 
+# Static site junk
+MEDUSA_RENDERER_CLASS = "django_medusa.renderers.S3StaticSiteRenderer"
+MEDUSA_MULTITHREAD = True
+AWS_ACCESS_KEY = "AKIAID27ISOEHYY6VDIQ"
+AWS_SECRET_ACCESS_KEY = "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"
+AWS_STORAGE_BUCKET_NAME = "medusa-dev"
+
 try:
 	from settings_local import *
 except ImportError:
